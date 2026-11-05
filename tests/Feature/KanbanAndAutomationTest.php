@@ -149,15 +149,16 @@ class KanbanAndAutomationTest extends HelpdeskTestCase
 
     public function test_visibility_scope_respects_granular_permissions(): void
     {
-        $n1 = $this->agent('agente-n1');
-        $other = $this->agent('agente-n1');
+        \Spatie\Permission\Models\Role::create(['name' => 'somente-proprios'])->givePermissionTo('tickets.view_own');
+        $agent = $this->agent('somente-proprios');
+        $other = $this->agent('somente-proprios');
 
-        $mine = $this->service()->create(['subject' => 'Meu', 'assignee_id' => $n1->id]);
+        $mine = $this->service()->create(['subject' => 'Meu', 'assignee_id' => $agent->id]);
         $this->service()->create(['subject' => 'Do colega', 'assignee_id' => $other->id]);
 
-        $this->assertSame([$mine->id], Ticket::query()->visibleTo($n1)->pluck('id')->all());
-        $this->assertTrue($n1->can('view', $mine));
-        $this->assertFalse($n1->can('delete', $mine));
+        $this->assertSame([$mine->id], Ticket::query()->visibleTo($agent)->pluck('id')->all());
+        $this->assertTrue($agent->can('view', $mine));
+        $this->assertFalse($agent->can('delete', $mine));
     }
 
     public function test_mentions_in_internal_notes_notify_agents(): void

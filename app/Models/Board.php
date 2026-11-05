@@ -51,11 +51,17 @@ class Board extends Model
     /** Quadros que o usuário pode abrir: globais, do seu departamento ou das suas equipes. */
     public function scopeAccessibleBy(Builder $query, User $user): Builder
     {
-        if ($user->isSuperAdmin() || $user->can('tickets.view_all')) {
-            return $query;
+        $teamIds = $user->teamIds();
+
+        // N1: quadros da própria equipe; sem quadro de equipe, os globais/do departamento
+        // (os cards continuam filtrados pela equipe em Ticket::scopeVisibleTo)
+        if ($user->isKanbanOnly() && Board::query()->whereIn('team_id', $teamIds)->where('is_active', true)->exists()) {
+            return $query->whereIn('team_id', $teamIds);
         }
 
-        $teamIds = $user->teamIds();
+        if (! $user->isKanbanOnly() && ($user->isSuperAdmin() || $user->can('tickets.view_all'))) {
+            return $query;
+        }
         $departmentIds = Team::query()->whereIn('id', $teamIds)->pluck('department_id')->all();
 
         return $query->where(function (Builder $q) use ($teamIds, $departmentIds) {

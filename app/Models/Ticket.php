@@ -150,6 +150,11 @@ class Ticket extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
+        // N1: exclusivamente a fila das suas equipes (ignora view_all/view_own)
+        if ($user->isKanbanOnly()) {
+            return $query->whereIn('team_id', $user->teamIds() ?: [0]);
+        }
+
         if ($user->isSuperAdmin() || $user->can('tickets.view_all')) {
             return $query;
         }

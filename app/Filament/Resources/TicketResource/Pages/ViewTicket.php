@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\TicketResource\Pages;
 
-use App\Enums\MessageVisibility;
 use App\Filament\Resources\TicketResource;
+use App\Livewire\TicketConversation;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\CustomFields\CustomFieldService;
@@ -16,6 +16,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Colors\Color;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 
 class ViewTicket extends ViewRecord
 {
@@ -36,29 +37,34 @@ class ViewTicket extends ViewRecord
         return $infolist
             ->columns(3)
             ->schema([
-                Components\Group::make()
+                Components\Tabs::make('ticket')
                     ->columnSpan(['lg' => 2])
-                    ->schema([
-                        Components\Section::make('Descrição')
-                            ->collapsible()
+                    ->persistTabInQueryString()
+                    ->tabs([
+                        // Conversa abre por padrão: editor no topo + mensagens (mais recente primeiro)
+                        Components\Tabs\Tab::make('Conversa')
+                            ->icon('heroicon-o-chat-bubble-left-right')
+                            ->badge(fn (Ticket $record) => $record->messages()->count() ?: null)
                             ->schema([
-                                Components\TextEntry::make('description')
-                                    ->hiddenLabel()
-                                    ->html()
-                                    ->placeholder('Sem descrição'),
+                                Components\Livewire::make(TicketConversation::class)
+                                    ->key(fn (Ticket $record) => 'conversation-'.$record->id),
                             ]),
 
-                        Components\Section::make(fn (Ticket $record) => $record->type?->name ?? 'Campos')
-                            ->columns(2)
-                            ->visible(fn (Ticket $record) => app(CustomFieldService::class)->fieldsForType($record->ticket_type_id)->isNotEmpty())
-                            ->schema(fn (Ticket $record) => $this->customFieldEntries($record)),
-
-                        Components\Section::make('Timeline')
-                            ->icon('heroicon-o-chat-bubble-left-right')
+                        Components\Tabs\Tab::make('Detalhes')
+                            ->icon('heroicon-o-document-text')
                             ->schema([
-                                Components\ViewEntry::make('timeline')
-                                    ->hiddenLabel()
-                                    ->view('filament.infolists.ticket-timeline'),
+                                Components\Section::make('Descrição')
+                                    ->schema([
+                                        Components\TextEntry::make('description')
+                                            ->hiddenLabel()
+                                            ->html()
+                                            ->placeholder('Sem descrição'),
+                                    ]),
+
+                                Components\Section::make(fn (Ticket $record) => $record->type?->name ?? 'Campos')
+                                    ->columns(2)
+                                    ->visible(fn (Ticket $record) => app(CustomFieldService::class)->fieldsForType($record->ticket_type_id)->isNotEmpty())
+                                    ->schema(fn (Ticket $record) => $this->customFieldEntries($record)),
                             ]),
                     ]),
 
@@ -141,38 +147,8 @@ class ViewTicket extends ViewRecord
 
     protected function getHeaderActions(): array
     {
+        // Responder/nota interna não são mais modais: o editor vive na aba "Conversa"
         return [
-            Actions\Action::make('reply')
-                ->label('Responder')
-                ->icon('heroicon-o-paper-airplane')
-                ->color('primary')
-                ->visible(fn () => Gate::allows('reply', $this->record))
-                ->modalWidth('2xl')
-                ->form([
-                    Forms\Components\Textarea::make('body')->label('Mensagem ao cliente')->required()->rows(6)->autofocus(),
-                    Forms\Components\Select::make('channel')->label('Canal')
-                        ->options(fn () => config('helpdesk.channels'))
-                        ->default(fn () => $this->record->channel),
-                ])
-                ->action(fn (array $data) => $this->postMessage($data, MessageVisibility::Public)),
-
-            Actions\Action::make('note')
-                ->label('Nota interna')
-                ->icon('heroicon-o-lock-closed')
-                ->color('warning')
-                ->visible(fn () => Gate::allows('addInternalNote', $this->record))
-                ->modalWidth('2xl')
-                ->form([
-                    Forms\Components\Textarea::make('body')
-                        ->label('Nota (invisível ao cliente)')
-                        ->required()
-                        ->rows(6)
-                        ->autofocus()
-                        ->helperText(fn () => 'Mencione com @username: '.User::query()->agents()->whereNotNull('username')
-                            ->orderBy('username')->limit(8)->pluck('username')->map(fn ($u) => '@'.$u)->implode(' ')),
-                ])
-                ->action(fn (array $data) => $this->postMessage($data, MessageVisibility::Internal)),
-
             TicketResource::assumeAction(Actions\Action::class),
             TicketResource::moveAction(Actions\Action::class),
             TicketResource::resolveAction(Actions\Action::class),
@@ -212,23 +188,9 @@ class ViewTicket extends ViewRecord
         ];
     }
 
-    private function postMessage(array $data, MessageVisibility $visibility): void
-    {
-        app(TicketService::class)->addMessage($this->record, [
-            'body' => $data['body'],
-            'visibility' => $visibility,
-            'channel' => $data['channel'] ?? null,
-        ], auth()->user());
-
-        $this->refreshRecord();
-
-        Notification::make()
-            ->title($visibility === MessageVisibility::Internal ? 'Nota interna registrada' : 'Resposta enviada')
-            ->success()
-            ->send();
-    }
-
-    private function refreshRecord(): void
+    /** Disparado pelo TicketConversation: 1ª resposta muda SLA/datas do painel lateral. */
+    #[On('ticket-conversation-updated')]
+    public function refreshRecord(): void
     {
         $this->record->refresh();
         $this->record->unsetRelations();

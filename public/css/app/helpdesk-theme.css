@@ -507,6 +507,228 @@
     color: var(--hd-muted);
 }
 
+/* ------------------------------------------------------------ Conversa do ticket (chat) */
+
+.hd-chat {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.hd-composer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.9rem;
+    border: 1px solid var(--hd-line);
+    border-radius: var(--hd-radius);
+    background: var(--hd-surface-2);
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.hd-composer--internal {
+    background: color-mix(in srgb, var(--hd-warn-bg) 60%, var(--hd-surface));
+    border-color: #e0c27a;
+}
+
+.hd-composer__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.hd-composer__hint {
+    font-size: 0.72rem;
+    color: var(--hd-muted);
+}
+
+.hd-chat__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.hd-chat__more {
+    display: flex;
+    justify-content: center;
+    padding-top: 0.25rem;
+}
+
+/* Bolhas: cliente à esquerda, equipe à direita, sistema centralizado */
+.hd-bubble {
+    max-width: min(85%, 46rem);
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--hd-line);
+    border-radius: 0.85rem;
+    background: var(--hd-surface);
+    box-shadow: var(--hd-shadow-sm);
+}
+
+.hd-bubble--in {
+    align-self: flex-start;
+    border-top-left-radius: 0.2rem;
+    border-left: 3px solid var(--hd-cyan);
+}
+
+.hd-bubble--out {
+    align-self: flex-end;
+    border-top-right-radius: 0.2rem;
+    background: color-mix(in srgb, var(--hd-ok-bg) 55%, var(--hd-surface));
+}
+
+.hd-bubble--internal {
+    background: color-mix(in srgb, var(--hd-warn-bg) 70%, var(--hd-surface));
+    border-color: #e0c27a;
+    border-style: dashed;
+}
+
+.hd-bubble--system {
+    align-self: center;
+    max-width: 100%;
+    background: transparent;
+    box-shadow: none;
+    border-style: dashed;
+    font-size: 0.8rem;
+}
+
+.hd-bubble__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 0.75rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.72rem;
+    color: var(--hd-muted);
+}
+
+.hd-bubble__author {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--hd-text);
+}
+
+.hd-bubble__body {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    word-break: break-word;
+}
+
+.hd-bubble__body p,
+.hd-bubble__body ul,
+.hd-bubble__body ol,
+.hd-bubble__body blockquote,
+.hd-bubble__body pre {
+    margin: 0 0 0.5rem;
+}
+
+.hd-bubble__body ul { list-style: disc; padding-left: 1.25rem; }
+.hd-bubble__body ol { list-style: decimal; padding-left: 1.25rem; }
+.hd-bubble__body a { color: var(--hd-accent); text-decoration: underline; }
+.hd-bubble__body blockquote { border-left: 3px solid var(--hd-line); padding-left: 0.75rem; color: var(--hd-muted); }
+.hd-bubble__body pre { font-family: var(--hd-mono); font-size: 0.8rem; background: var(--hd-surface-2); padding: 0.5rem; border-radius: 0.35rem; overflow-x: auto; }
+
+/* Imagens coladas no editor */
+.hd-bubble__body img {
+    max-width: 100%;
+    max-height: 22rem;
+    border-radius: 0.4rem;
+    margin: 0.35rem 0;
+}
+
+.hd-bubble__body figcaption { display: none; }
+
+.hd-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.hd-files__thumb img {
+    width: 7rem;
+    height: 5rem;
+    object-fit: cover;
+    border-radius: 0.4rem;
+    border: 1px solid var(--hd-line);
+}
+
+.hd-files__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 18rem;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--hd-line);
+    border-radius: 999px;
+    background: var(--hd-surface);
+    font-size: 0.75rem;
+    color: var(--hd-text);
+}
+
+.hd-files__chip:hover { border-color: var(--hd-accent); }
+.hd-files__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hd-files__size { color: var(--hd-muted); flex-shrink: 0; }
+
+/* ------------------------------------------------------------ Dashboard: atalhos */
+
+.hd-shortcuts {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.hd-shortcut {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--hd-line);
+    border-radius: 0.75rem;
+    background: var(--hd-surface);
+    box-shadow: var(--hd-shadow-sm);
+    transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.hd-shortcut:not(.hd-shortcut--disabled):hover {
+    border-color: var(--hd-accent);
+    box-shadow: var(--hd-shadow-md);
+}
+
+.hd-shortcut--disabled { cursor: not-allowed; opacity: 0.6; }
+
+.hd-shortcut__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.6rem;
+    background: var(--hd-ok-bg);
+    color: var(--hd-ok-fg);
+}
+
+.hd-shortcut__text { flex: 1; min-width: 0; }
+
+.hd-shortcut__label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--hd-text);
+}
+
+.hd-shortcut__desc {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--hd-muted);
+}
+
+.hd-shortcut__arrow { color: var(--hd-muted); transition: transform 0.15s; }
+.hd-shortcut:hover .hd-shortcut__arrow { transform: translateX(3px); color: var(--hd-accent); }
+
 /* ------------------------------------------------------------ Log de automações */
 
 .hd-run {

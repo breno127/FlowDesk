@@ -95,4 +95,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     {
         return $this->hasRole(config('helpdesk.rbac.super_admin_role'));
     }
+
+    /**
+     * Perfil N1: acesso restrito ao Kanban da própria equipe.
+     * Memoizado por instância — é consultado em todo Gate::before.
+     */
+    public function isKanbanOnly(): bool
+    {
+        return $this->kanbanOnlyCache ??= ! $this->isSuperAdmin()
+            && $this->hasAnyRole(config('helpdesk.rbac.kanban_only_roles', []));
+    }
+
+    private ?bool $kanbanOnlyCache = null;
 }

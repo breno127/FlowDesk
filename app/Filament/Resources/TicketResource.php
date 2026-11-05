@@ -47,6 +47,22 @@ class TicketResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'subject';
 
+    // ================================================================== Acesso
+
+    /**
+     * N1 precisa de `viewAny` (o Filament exige em toda página do Resource, inclusive
+     * a View do ticket aberto pelo Kanban), mas não deve ver a lista nem buscar.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! auth()->user()?->isKanbanOnly();
+    }
+
+    public static function canGloballySearch(): bool
+    {
+        return parent::canGloballySearch() && ! auth()->user()?->isKanbanOnly();
+    }
+
     // ================================================================== Query
 
     public static function getEloquentQuery(): Builder

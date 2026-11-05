@@ -8,7 +8,7 @@ use App\Filament\Resources;
 use App\Filament\Resources\RoleResource\Pages\CreateRole;
 use App\Filament\Resources\TicketResource\Pages\CreateTicket;
 use App\Filament\Resources\TicketResource\Pages\ListTickets;
-use App\Filament\Resources\TicketResource\Pages\ViewTicket;
+use App\Livewire\TicketConversation;
 use App\Models\CustomField;
 use App\Models\Ticket;
 use App\Models\TicketType;
@@ -122,9 +122,11 @@ class FilamentPanelTest extends HelpdeskTestCase
         $this->slaPolicy();
         $ticket = $this->service()->create(['subject' => 'Responder']);
 
-        Livewire::test(ViewTicket::class, ['record' => $ticket->getRouteKey()])
-            ->callAction('reply', ['body' => 'Olá, já estamos verificando.'])
-            ->assertHasNoActionErrors();
+        Livewire::test(TicketConversation::class, ['record' => $ticket])
+            ->fillForm(['visibility' => 'public', 'body' => '<p>Olá, já estamos verificando.</p>'])
+            ->call('send')
+            ->assertHasNoFormErrors()
+            ->assertDispatched('ticket-conversation-updated');
 
         $this->assertNotNull($ticket->fresh()->first_response_at);
     }
@@ -149,7 +151,8 @@ class FilamentPanelTest extends HelpdeskTestCase
 
     public function test_agent_without_permission_cannot_see_others_tickets_in_table(): void
     {
-        $mine = $this->agent('agente-n1');
+        Role::create(['name' => 'somente-proprios'])->givePermissionTo('tickets.view_own');
+        $mine = $this->agent('somente-proprios');
         $own = $this->service()->create(['subject' => 'Meu chamado', 'assignee_id' => $mine->id]);
         $foreign = $this->service()->create(['subject' => 'Chamado alheio']);
 

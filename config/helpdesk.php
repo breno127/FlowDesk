@@ -137,9 +137,33 @@ return [
         'cards_per_column' => (int) env('HELPDESK_KANBAN_CARDS_PER_COLUMN', 100),
     ],
 
+    'attachments' => [
+        // Documentos anexados às mensagens: disco PRIVADO, servidos por rota autorizada
+        'disk' => env('HELPDESK_ATTACHMENTS_DISK', 'local'),
+        // Imagens coladas no editor: precisam de URL direta para renderizar inline
+        'inline_disk' => env('HELPDESK_INLINE_IMAGES_DISK', 'public'),
+        'directory' => env('HELPDESK_ATTACHMENTS_DIR', 'ticket-attachments'),
+        'max_files' => (int) env('HELPDESK_ATTACHMENTS_MAX_FILES', 5),
+        'max_size_kb' => (int) env('HELPDESK_ATTACHMENTS_MAX_KB', 10240),
+        'accepted_types' => array_filter(explode(',', env(
+            'HELPDESK_ATTACHMENTS_TYPES',
+            'image/*,application/pdf,text/plain,text/csv,application/zip,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ))),
+    ],
+
+    // Atalhos do dashboard. Vazio = card exibido como "em breve" (módulos do passo 4).
+    'shortcuts' => [
+        'chat_url' => env('HELPDESK_CHAT_URL'),
+        'agenda_url' => env('HELPDESK_AGENDA_URL'),
+    ],
+
     'rbac' => [
         // Papel que ignora checagens (Gate::before)
         'super_admin_role' => env('HELPDESK_SUPER_ADMIN_ROLE', 'super-admin'),
+
+        // Papéis "somente Kanban" (N1): sem menus, sem cadastros/relatórios;
+        // veem apenas a fila da própria equipe, abrem os tickets dela e saem.
+        'kanban_only_roles' => array_filter(explode(',', env('HELPDESK_KANBAN_ONLY_ROLES', 'agente-n1'))),
 
         // Catálogo de permissões: grupo => [permissão => rótulo].
         // Sincronizado com o banco via `php artisan helpdesk:sync-permissions`.

@@ -140,10 +140,18 @@ class KanbanBoard extends Page
     #[Computed]
     public function filterOptions(): array
     {
+        $user = auth()->user();
+        // N1 só enxerga a própria equipe: filtros não oferecem o que ele não pode ver
+        $teamIds = $user->isKanbanOnly() ? $user->teamIds() : null;
+
         return [
-            'boards' => Board::query()->accessibleBy(auth()->user())->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
-            'agents' => User::query()->agents()->orderBy('name')->pluck('name', 'id')->all(),
-            'teams' => Team::query()->where('is_active', true)->orderBy('tier')->orderBy('name')->pluck('name', 'id')->all(),
+            'boards' => Board::query()->accessibleBy($user)->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
+            'agents' => User::query()->agents()
+                ->when($teamIds !== null, fn ($query) => $query->whereHas('teams', fn ($teams) => $teams->whereIn('teams.id', $teamIds)))
+                ->orderBy('name')->pluck('name', 'id')->all(),
+            'teams' => Team::query()->where('is_active', true)
+                ->when($teamIds !== null, fn ($query) => $query->whereIn('id', $teamIds))
+                ->orderBy('tier')->orderBy('name')->pluck('name', 'id')->all(),
             'priorities' => TicketPriority::query()->orderByDesc('level')->pluck('name', 'id')->all(),
             'types' => TicketType::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
         ];

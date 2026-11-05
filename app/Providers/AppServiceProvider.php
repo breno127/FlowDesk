@@ -14,6 +14,7 @@ use App\Repositories\Eloquent\TicketRepository;
 use App\Services\CustomFields\CustomFieldService;
 use App\Services\Sla\BusinessTimeCalculator;
 use App\Support\InputSanitizer;
+use App\Support\KanbanOnlyAccess;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -41,9 +42,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Super-admin ignora todas as checagens de permissão
-        Gate::before(function (User $user) {
-            return $user->hasRole(config('helpdesk.rbac.super_admin_role')) ? true : null;
+        // Super-admin ignora todas as checagens; N1 só passa pelo que o Kanban exige
+        Gate::before(function (User $user, string $ability, array $arguments = []) {
+            if ($user->isSuperAdmin()) {
+                return true;
+            }
+
+            return $user->isKanbanOnly() ? KanbanOnlyAccess::check($ability, $arguments) : null;
         });
 
         Gate::policy(Role::class, RolePolicy::class);

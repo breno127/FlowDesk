@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 class TicketMessage extends Model
 {
@@ -55,5 +57,28 @@ class TicketMessage extends Model
     public function authorName(): string
     {
         return $this->author?->name ?? 'Sistema';
+    }
+
+    /**
+     * Corpo pronto para exibir. Mensagens do editor (HTML) passam pelo sanitizador
+     * do Filament; as de canais em texto puro (WhatsApp, e-mail, API) são escapadas
+     * preservando quebras de linha. @menções viram destaque nos dois casos.
+     */
+    public function bodyHtml(): HtmlString
+    {
+        $body = (string) $this->body;
+
+        $html = $body !== strip_tags($body)
+            ? Str::sanitizeHtml($body)
+            : nl2br(e($body), false);
+
+        // Só fora de tags (o lookahead impede casar dentro de atributos como alt="@x")
+        $html = preg_replace(
+            '/(?<![\w.@\/])@([A-Za-z0-9][A-Za-z0-9._-]{1,63})(?![^<]*>)/u',
+            '<span class="hd-mention">@$1</span>',
+            $html
+        );
+
+        return new HtmlString($html);
     }
 }

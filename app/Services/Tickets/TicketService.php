@@ -302,7 +302,8 @@ class TicketService
      * Adiciona mensagem/nota à timeline.
      *
      * @param  array{body: string, visibility?: string|MessageVisibility, channel?: ?string,
-     *     direction?: string|MessageDirection, external_id?: ?string, meta?: ?array}  $data
+     *     direction?: string|MessageDirection, external_id?: ?string, meta?: ?array,
+     *     attachments?: list<array{disk: string, path: string, original_name: string, mime_type?: ?string, size?: int}>}  $data
      * @param  Model|null  $author  User (agente), Contact (cliente) ou null (sistema)
      */
     public function addMessage(Ticket $ticket, array $data, ?Model $author = null): TicketMessage
@@ -332,6 +333,17 @@ class TicketService
                 'external_id' => $data['external_id'] ?? null,
                 'meta' => $data['meta'] ?? null,
             ]);
+
+            foreach ($data['attachments'] ?? [] as $file) {
+                $message->attachments()->create([
+                    'ticket_id' => $ticket->id,
+                    'disk' => $file['disk'],
+                    'path' => $file['path'],
+                    'original_name' => $file['original_name'],
+                    'mime_type' => $file['mime_type'] ?? null,
+                    'size' => (int) ($file['size'] ?? 0),
+                ]);
+            }
 
             $now = now();
 

@@ -53,6 +53,12 @@ class TicketPolicy
         return $user->can('tickets.internal_note') && $this->view($user, $ticket);
     }
 
+    /** Enxergar notas internas (e seus anexos) na conversa. */
+    public function viewInternalNotes(User $user, Ticket $ticket): bool
+    {
+        return $user->canAny(['tickets.internal_note', 'tickets.view_all']) && $this->view($user, $ticket);
+    }
+
     public function changePriority(User $user, Ticket $ticket): bool
     {
         return $user->can('tickets.change_priority') && $this->view($user, $ticket);
