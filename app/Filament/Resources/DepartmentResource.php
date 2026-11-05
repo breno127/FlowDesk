@@ -29,7 +29,7 @@ class DepartmentResource extends Resource
             Forms\Components\TextInput::make('name')->label('Nome')->required()->maxLength(120)
                 ->live(onBlur: true)
                 ->afterStateUpdated(fn (Forms\Set $set, Forms\Get $get, ?string $state) => blank($get('slug')) && $set('slug', Str::slug((string) $state))),
-            Forms\Components\TextInput::make('slug')->required()->alphaDash()->unique('departments', 'slug', ignoreRecord: true),
+            Forms\Components\TextInput::make('slug')->required()->alphaDash()->normalizeUsing(fn (?string $state) => \App\Support\InputSanitizer::slug($state))->unique('departments', 'slug', ignoreRecord: true),
             Forms\Components\Select::make('parent_id')->label('Departamento superior')
                 ->options(fn (?Department $record) => Department::query()->when($record, fn ($query) => $query->whereKeyNot($record->id))->pluck('name', 'id')),
             Forms\Components\TextInput::make('email')->label('E-mail do setor')->email(),

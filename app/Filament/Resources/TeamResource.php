@@ -38,7 +38,7 @@ class TeamResource extends Resource
                     Forms\Components\TextInput::make('name')->label('Nome')->required()->maxLength(120)
                         ->live(onBlur: true)
                         ->afterStateUpdated(fn (Forms\Set $set, Forms\Get $get, ?string $state, string $operation) => $operation === 'create' && $set('slug', Str::slug((string) $state))),
-                    Forms\Components\TextInput::make('slug')->required()->alphaDash()->unique(ignoreRecord: true),
+                    Forms\Components\TextInput::make('slug')->required()->alphaDash()->normalizeUsing(fn (?string $state) => \App\Support\InputSanitizer::slug($state))->unique(ignoreRecord: true),
                     Forms\Components\Select::make('department_id')->label('Departamento')->relationship('department', 'name')->required()->preload()->searchable()
                         ->createOptionForm(DepartmentResource::formSchema()),
                     Forms\Components\TextInput::make('tier')->label('Nível (N)')->numeric()->minValue(1)->maxValue(9)->default(1)->required(),

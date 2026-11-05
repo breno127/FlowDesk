@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ClientCompanyResource\Pages;
 use App\Models\ClientCompany;
+use App\Support\InputSanitizer;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -35,7 +36,18 @@ class ClientCompanyResource extends Resource
             Forms\Components\TextInput::make('name')->label('Razão social / nome')->required()->maxLength(255),
             Forms\Components\TextInput::make('document')->label('CNPJ/CPF')->maxLength(32)->unique(ignoreRecord: true),
             Forms\Components\TextInput::make('domain')->label('Domínio de e-mail')->placeholder('empresa.com.br')
-                ->regex('/^(?!-)[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/'),
+                ->helperText('Contatos com e-mail deste domínio são vinculados à empresa. Pode colar um e-mail ou site: o domínio é extraído.')
+                // Aceita "ana@empresa.com.br" ou "https://www.empresa.com.br" e guarda "empresa.com.br"
+                ->live(onBlur: true)
+                ->afterStateUpdated(fn (Forms\Set $set, ?string $state) => $set('domain', InputSanitizer::domain($state)))
+                ->normalizeUsing(fn (?string $state) => InputSanitizer::domain($state))
+                ->regex('/^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/')
+                ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                    if ($value && in_array($value, config('helpdesk.public_email_domains', []), true)) {
+                        $fail("{$value} é um provedor de e-mail público e não identifica a empresa. Use o domínio corporativo (ex.: empresa.com.br) ou deixe em branco.");
+                    }
+                })
+                ->validationMessages(['regex' => 'Informe um domínio válido, como empresa.com.br.']),
             Forms\Components\TextInput::make('tier')->label('Segmento')->maxLength(32)->datalist(fn () => ClientCompany::query()->whereNotNull('tier')->distinct()->pluck('tier')->all()),
             Forms\Components\Textarea::make('notes')->label('Observações')->rows(3)->columnSpanFull(),
             Forms\Components\Toggle::make('is_active')->label('Ativa')->default(true),

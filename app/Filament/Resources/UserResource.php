@@ -68,7 +68,9 @@ class UserResource extends Resource
                                 }
                             }),
                         Forms\Components\TextInput::make('email')->label('E-mail')->email()->required()->unique(ignoreRecord: true),
-                        Forms\Components\TextInput::make('phone')->label('Telefone')->tel()->maxLength(32),
+                        Forms\Components\TextInput::make('phone')->label('Telefone')->tel()->maxLength(32)
+                            ->placeholder('(11) 99999-9999')
+                            ->normalizeUsing(fn (?string $state) => \App\Support\InputSanitizer::phone($state)),
                         Forms\Components\TextInput::make('password')->label('Senha')
                             ->password()->revealable()
                             ->minLength(12)

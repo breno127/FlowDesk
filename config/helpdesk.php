@@ -29,6 +29,16 @@ return [
         'jira' => 'Jira',
     ],
 
+    // DDI aplicado a telefones digitados sem "+" (normalização para E.164)
+    'default_country_code' => env('HELPDESK_DEFAULT_COUNTRY_CODE', '55'),
+
+    // Provedores públicos: não servem como "domínio da empresa" (vincularia
+    // qualquer contato @gmail.com à mesma empresa)
+    'public_email_domains' => array_filter(explode(',', env(
+        'HELPDESK_PUBLIC_EMAIL_DOMAINS',
+        'gmail.com,googlemail.com,hotmail.com,outlook.com,live.com,msn.com,yahoo.com,yahoo.com.br,icloud.com,me.com,uol.com.br,bol.com.br,terra.com.br,ig.com.br,proton.me,protonmail.com'
+    ))),
+
     'sla' => [
         // % do tempo-alvo consumido a partir do qual o timer entra em "warning"
         'default_warning_percent' => (int) env('HELPDESK_SLA_WARNING_PERCENT', 75),

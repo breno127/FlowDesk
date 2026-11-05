@@ -29,7 +29,7 @@ class TicketPriorityResource extends Resource
             Forms\Components\TextInput::make('name')->label('Nome')->required()->maxLength(60)
                 ->live(onBlur: true)
                 ->afterStateUpdated(fn (Forms\Set $set, Forms\Get $get, ?string $state) => blank($get('slug')) && $set('slug', Str::slug((string) $state))),
-            Forms\Components\TextInput::make('slug')->required()->alphaDash()->unique(ignoreRecord: true),
+            Forms\Components\TextInput::make('slug')->required()->alphaDash()->normalizeUsing(fn (?string $state) => \App\Support\InputSanitizer::slug($state))->unique(ignoreRecord: true),
             Forms\Components\ColorPicker::make('color')->label('Cor')->required()->default('#8dbea3'),
             Forms\Components\TextInput::make('level')->label('Nível (maior = mais crítico)')->numeric()->minValue(1)->maxValue(255)->required(),
             Forms\Components\TextInput::make('weight')->label('Peso na distribuição')->numeric()->minValue(1)->maxValue(1000)->required()->default(1)

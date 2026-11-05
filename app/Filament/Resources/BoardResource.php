@@ -35,7 +35,7 @@ class BoardResource extends Resource
                     Forms\Components\TextInput::make('name')->label('Nome')->required()->maxLength(120)
                         ->live(onBlur: true)
                         ->afterStateUpdated(fn (Forms\Set $set, ?string $state, string $operation) => $operation === 'create' && $set('slug', Str::slug((string) $state))),
-                    Forms\Components\TextInput::make('slug')->required()->alphaDash()->unique(ignoreRecord: true),
+                    Forms\Components\TextInput::make('slug')->required()->alphaDash()->normalizeUsing(fn (?string $state) => \App\Support\InputSanitizer::slug($state))->unique(ignoreRecord: true),
                     Forms\Components\Select::make('department_id')->label('Departamento dono')->relationship('department', 'name')->preload()
                         ->placeholder('Global'),
                     Forms\Components\Select::make('team_id')->label('Equipe dona')->relationship('team', 'name')->preload()

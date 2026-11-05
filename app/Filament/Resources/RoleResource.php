@@ -39,7 +39,7 @@ class RoleResource extends Resource
                         ->label('Nome (slug)')
                         ->required()
                         ->maxLength(100)
-                        ->alphaDash()
+                        ->alphaDash()->normalizeUsing(fn (?string $state) => \App\Support\InputSanitizer::slug($state))
                         ->unique(ignoreRecord: true, modifyRuleUsing: fn (Unique $rule) => $rule->where('guard_name', config('auth.defaults.guard')))
                         ->disabled(fn (?Role $record) => static::isSuperAdmin($record))
                         ->helperText(fn (?Role $record) => static::isSuperAdmin($record) ? 'Perfil super-admin: acesso irrestrito, não editável.' : null),
@@ -125,7 +125,7 @@ class RoleResource extends Resource
                 Tables\Actions\ReplicateAction::make()
                     ->label('Duplicar')
                     ->visible(fn (Role $record) => ! static::isSuperAdmin($record) && auth()->user()->can('create', Role::class))
-                    ->form([Forms\Components\TextInput::make('name')->label('Nome do novo perfil')->required()->alphaDash()->unique('roles', 'name')])
+                    ->form([Forms\Components\TextInput::make('name')->label('Nome do novo perfil')->required()->alphaDash()->normalizeUsing(fn (?string $state) => \App\Support\InputSanitizer::slug($state))->unique('roles', 'name')])
                     ->using(function (Role $record, array $data) {
                         $copy = Role::create(['name' => $data['name'], 'guard_name' => $record->guard_name]);
                         $copy->syncPermissions($record->permissions);

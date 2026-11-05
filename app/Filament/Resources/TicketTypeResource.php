@@ -38,7 +38,7 @@ class TicketTypeResource extends Resource
                     Forms\Components\TextInput::make('name')->label('Nome')->required()->maxLength(120)
                         ->live(onBlur: true)
                         ->afterStateUpdated(fn (Forms\Set $set, ?string $state, string $operation) => $operation === 'create' && $set('slug', Str::slug((string) $state))),
-                    Forms\Components\TextInput::make('slug')->required()->alphaDash()->unique(ignoreRecord: true),
+                    Forms\Components\TextInput::make('slug')->required()->alphaDash()->normalizeUsing(fn (?string $state) => \App\Support\InputSanitizer::slug($state))->unique(ignoreRecord: true),
                     Forms\Components\Select::make('department_id')->label('Departamento responsável')->relationship('department', 'name')->preload(),
                     Forms\Components\ColorPicker::make('color')->label('Cor'),
                     Forms\Components\TextInput::make('icon')->label('Ícone (heroicon)')->placeholder('heroicon-o-computer-desktop'),

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ContactResource\Pages;
 use App\Models\ClientCompany;
 use App\Models\Contact;
+use App\Support\InputSanitizer;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -39,11 +40,16 @@ class ContactResource extends Resource
                 ->live(onBlur: true)
                 ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, ?string $state) {
                     if ($state && blank($get('client_company_id')) && str_contains($state, '@')) {
-                        $set('client_company_id', ClientCompany::query()->where('domain', strtolower(substr(strrchr($state, '@'), 1)))->value('id'));
+                        $set('client_company_id', ClientCompany::query()->where('domain', InputSanitizer::domain($state))->value('id'));
                     }
                 }),
-            Forms\Components\TextInput::make('phone')->label('Telefone (E.164)')->tel()->placeholder('+5511999999999')
-                ->regex('/^\+?[1-9]\d{7,14}$/'),
+            Forms\Components\TextInput::make('phone')->label('Telefone')->tel()->placeholder('(11) 99999-9999')
+                ->helperText('Qualquer formato; é salvo no padrão internacional (+55…), usado pelo WhatsApp.')
+                ->live(onBlur: true)
+                ->afterStateUpdated(fn (Forms\Set $set, ?string $state) => $set('phone', InputSanitizer::phone($state)))
+                ->normalizeUsing(fn (?string $state) => InputSanitizer::phone($state))
+                ->regex('/^\+[1-9]\d{7,14}$/')
+                ->validationMessages(['regex' => 'Telefone inválido. Exemplo: (11) 99999-9999 ou +55 11 99999-9999.']),
             Forms\Components\TextInput::make('whatsapp_id')->label('WhatsApp (wa_id)')->maxLength(32)
                 ->unique('contacts', 'whatsapp_id', ignoreRecord: true),
             Forms\Components\Select::make('client_company_id')->label('Empresa')

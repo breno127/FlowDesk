@@ -36,6 +36,8 @@ class CustomFieldResource extends Resource
                 ->afterStateUpdated(fn (Forms\Set $set, Forms\Get $get, ?string $state) => blank($get('key')) && $set('key', Str::slug((string) $state, '_'))),
             Forms\Components\TextInput::make('key')->label('Chave')->required()->maxLength(64)
                 ->regex('/^[a-z][a-z0-9_]*$/')
+                ->normalizeUsing(fn (?string $state) => \App\Support\InputSanitizer::slug($state, '_'))
+                ->validationMessages(['regex' => 'A chave deve começar com letra e conter apenas letras minúsculas, números e _.'])
                 ->unique('custom_fields', 'key', ignoreRecord: true)
                 ->helperText('Usada em API, automações (custom.chave) e relatórios.'),
             Forms\Components\Select::make('type')->label('Tipo')->options(CustomFieldType::class)->required()->live()
